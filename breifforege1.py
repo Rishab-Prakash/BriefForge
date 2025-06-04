@@ -314,131 +314,125 @@ Output format: {output_type}
 
 # --- PDF Export with Error Handling and New Styling ---
 def export_to_pdf(brief_text):
-    """Export brief to PDF with comprehensive error handling and preferred styling"""
+  """Export brief to PDF with the original working logic"""
 
-    if not brief_text or not brief_text.strip():
-        raise ValueError("Cannot export empty brief to PDF")
+  if not brief_text or not brief_text.strip():
+      raise ValueError("Cannot export empty brief to PDF")
 
-    try:
-        # Additional sanitization for PDF content
-        brief_text = sanitize_text_input(brief_text, allow_special_chars=True)
+  try:
+      # Use the original simple and effective processing
+      brief_text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', brief_text)
+      cleaned_lines = []
+      buffer = ""
 
-        # Use your preferred PDF processing logic
-        brief_text = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', brief_text)
-        cleaned_lines = []
-        buffer = ""
+      for line in brief_text.splitlines():
+          if line.strip() == "":
+              if buffer:
+                  cleaned_lines.append(buffer.strip())
+                  buffer = ""
+          elif re.match(r"^\d+\.\s", line) or line.startswith("- ") or line.startswith("* ") or line.startswith("#"):
+              if buffer:
+                  cleaned_lines.append(buffer.strip())
+              buffer = line.strip()
+          else:
+              buffer += " " + line.strip()
 
-        for line in brief_text.splitlines():
-            if line.strip() == "":
-                if buffer:
-                    cleaned_lines.append(buffer.strip())
-                    buffer = ""
-            elif re.match(r"^\d+\.\s", line) or line.startswith("- ") or line.startswith("* ") or line.startswith("#"):
-                if buffer:
-                    cleaned_lines.append(buffer.strip())
-                buffer = line.strip()
-            else:
-                buffer += " " + line.strip()
+      if buffer:
+          cleaned_lines.append(buffer.strip())
 
-        if buffer:
-            cleaned_lines.append(buffer.strip())
+      # Use the original working HTML template
+      html = """
+      <html><head><style>
+      body {
+          font-family: 'Segoe UI', sans-serif;
+          padding: 20px;
+          font-size: 11pt;
+          line-height: 1.3;
+          color: #333;
+      }
+      h1 {
+          font-size: 18pt;
+          color: #1a365d;
+          margin: 0 0 6px 0;
+          border-bottom: 2px solid #3182ce;
+          padding-bottom: 3px;
+      }
+      h2 {
+          font-size: 14pt;
+          color: #2c5aa0;
+          margin: 12px 0 4px 0;
+      }
+      h3 {
+          font-size: 12pt;
+          color: #3182ce;
+          margin: 8px 0 3px 0;
+      }
+      p {
+          margin: 0 0 6px 0;
+          text-align: justify;
+      }
+      ol, ul {
+          margin: 4px 0 8px 16px;
+          padding: 0;
+      }
+      li {
+          margin-bottom: 2px;
+          line-height: 1.25;
+      }
+      </style></head><body>
+      """
 
-        # Use your preferred HTML styling
-        html = """
-        <html><head><style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            padding: 25px;
-            font-size: 11pt;
-            line-height: 1.25;
-            color: #333;
-        }
-        h1 {
-            font-size: 18pt;
-            color: #1a365d;
-            margin: 0 0 8px 0;
-            border-bottom: 2px solid #3182ce;
-        }
-        h2 {
-            font-size: 14pt;
-            color: #2c5aa0;
-            margin: 10px 0 4px 0;
-        }
-        h3 {
-            font-size: 12pt;
-            color: #3182ce;
-            margin: 8px 0 3px 0;
-        }
-        p {
-            margin: 2px 0 4px 0;
-            text-align: justify;
-        }
-        ol, ul {
-            margin: 2px 0 6px 16px;
-        }
-        li {
-            margin-bottom: 0px;
-            line-height: 1.2;
-        }
-        </style></head><body>
-        """
+      in_list = False
+      sublist_mode = False
+      list_type = ""
 
-        in_list = False
-        sublist_mode = False
-        list_type = ""
+      for line in cleaned_lines:
+          if line.startswith("# "): 
+              html += f"<h1>{line[2:]}</h1>\n"
+          elif line.startswith("## "): 
+              html += f"<h2>{line[3:]}</h2>\n"
+          elif line.startswith("### "): 
+              html += f"<h3>{line[4:]}</h3>\n"
+          elif re.match(r"^\d+\.\s", line):
+              if not in_list:
+                  html += "<ol>\n"
+                  in_list = True
+                  list_type = "ol"
+              html += f"<li>{line[3:]}</li>\n"
+          elif line.startswith("- ") or line.startswith("* "):
+              if not sublist_mode:
+                  html += "<ul>\n"
+                  sublist_mode = True
+              html += f"<li>{line[2:]}</li>\n"
+          else:
+              if sublist_mode:
+                  html += "</ul>\n"
+                  sublist_mode = False
+              if in_list:
+                  html += f"</{list_type}>\n"
+                  in_list = False
+              html += f"<p>{line}</p>\n"
 
-        for line in cleaned_lines:
-            if line.startswith("# "): 
-                html += f"<h1>{line[2:]}</h1>\n"
-            elif line.startswith("## "): 
-                html += f"<h2>{line[3:]}</h2>\n"
-            elif line.startswith("### "): 
-                html += f"<h3>{line[4:]}</h3>\n"
-            elif re.match(r"^\d+\.\s", line):
-                if not in_list:
-                    html += "<ol>\n"
-                    in_list = True
-                    list_type = "ol"
-                html += f"<li>{line[3:]}</li>\n"
-            elif line.startswith("- ") or line.startswith("* "):
-                if not sublist_mode:
-                    html += "<ul>\n"
-                    sublist_mode = True
-                html += f"<li>{line[2:]}</li>\n"
-            else:
-                if sublist_mode:
-                    html += "</ul>\n"
-                    sublist_mode = False
-                if in_list:
-                    html += f"</{list_type}>\n"
-                    in_list = False
-                html += f"<p>{line}</p>\n"
+      if sublist_mode: 
+          html += "</ul>\n"
+      if in_list: 
+          html += f"</{list_type}>\n"
+      html += "</body></html>"
 
-        if sublist_mode: 
-            html += "</ul>\n"
-        if in_list: 
-            html += f"</{list_type}>\n"
-        html += "</body></html>"
+      # Create PDF with basic error handling
+      with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
+          pdf_result = pisa.CreatePDF(html, dest=tmpfile)
 
-        # Create PDF with enhanced error handling
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmpfile:
-            pdf_result = pisa.CreatePDF(html, dest=tmpfile)
+          if pdf_result.err:
+              raise Exception(f"PDF generation failed with {pdf_result.err} errors")
 
-            if pdf_result.err:
-                raise Exception(f"PDF generation failed with {pdf_result.err} errors")
+          logger.info(f"PDF successfully generated: {tmpfile.name}")
+          return tmpfile.name
 
-            # Verify file was created and has content
-            tmpfile.flush()
-            if os.path.getsize(tmpfile.name) == 0:
-                raise Exception("Generated PDF file is empty")
-
-            logger.info(f"PDF successfully generated: {tmpfile.name}")
-            return tmpfile.name
-
-    except Exception as e:
-        error_msg = f"PDF export failed: {str(e)}"
-        logger.error(error_msg)
-        raise Exception(error_msg)
+  except Exception as e:
+      error_msg = f"PDF export failed: {str(e)}"
+      logger.error(error_msg)
+      raise Exception(error_msg)
 
 # --- Streamlit UI ---
 st.title("BriefForge – Market Opportunity Brief Generator")
@@ -646,3 +640,5 @@ if st.button("Generate Brief", type="primary"):
 st.markdown("---")
 st.markdown("💡 **Tips**: Be specific and detailed for better results • All inputs are automatically sanitized")
 st.markdown("🔒 **Security**: Your data is processed securely and not stored permanently")
+st.markdown("---")
+st.markdown("**Ethical Use Notice**: This tool is for lawful and ethical business use only. Inputs related to illegal, exploitative, or harmful activities will be blocked.")
