@@ -4,4 +4,9 @@ version = "0.1.0"
 description = ""
 authors = ["Your Name <you@example.com>"]
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "openai>=1.82.1",
+    "python-pptx>=1.0.2",
+    "streamlit>=1.45.1",
+    "xhtml2pdf>=0.2.17",
+]
